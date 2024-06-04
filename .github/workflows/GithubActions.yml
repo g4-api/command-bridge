@@ -76,7 +76,7 @@ jobs:
       run: dotnet build
 
     - name: test
-      run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"Xplat Code Coverage"
+      run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"XPlat Code Coverage;Format=json"
       working-directory: src/${{ env.projectName }}.UnitTests
 
     # Step to upload the build artifact
@@ -90,13 +90,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-coverage
-        path: '**/TestResults/**/coverage.cobertura.xml'
-
+        path: '**/TestResults/**/coverage.json'
+        
   test:
     runs-on: ubuntu-latest
     needs: 
       - build
     if: success()
+    environment: '3rd Party'
 
     steps:
     - uses: actions/checkout@v4
@@ -113,3 +114,11 @@ jobs:
       with:
         files: |
           ./TestOutput.xml
+
+    - name: Check Code Coverage
+      uses: coverbot-io/coverbot-action@v2
+      with:
+        format: elixir
+        file: coverage.json
+        coverbot_api_key: ${{ secrets.COVERBOT_API_KEY}}
+        github_token: ${{ secrets.GITHUB_TOKEN}}
