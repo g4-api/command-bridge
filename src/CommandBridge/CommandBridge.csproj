@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Assembly -->
+		<TargetFramework>net8.0</TargetFramework>
+		<AssemblyVersion>8.0.0.0</AssemblyVersion>
+		<FileVersion>8.0.0.0</FileVersion>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+		<LangVersion>latest</LangVersion>
+
+		<!-- Package -->
+		<PackageId>CommandBridge</PackageId>
+		<Title>CommandBridge</Title>
+		<PackageProjectUrl>https://github.com/g4-api/command-bridge</PackageProjectUrl>
+		<Authors>G4 API Community</Authors>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseExpression>Apache-2.0+</PackageLicenseExpression>
+		<Description>
+			A robust and versatile command-line utility framework designed to simplify the creation and management of command-line 
+			applications. With its powerful parameter handling and seamless command invocation, CommandBridge allows developers to 
+			build intuitive and efficient command-line tools effortlessly.
+		</Description>
+		<PackageTags>charp;command-line;dotnet;cli-framework;cli-utility</PackageTags>
+		<Copyright>Copyright 2023 (c) Roei Sabag &amp; HRC Corporation. All rights reserved.</Copyright>
+
+		<!-- https://learn.microsoft.com/en-us/dotnet/fundamentals/syslib-diagnostics/syslib1040-1049 -->
+		<NoWarn>$(NoWarn);SYSLIB1045</NoWarn>
+	</PropertyGroup>
+
+</Project>
