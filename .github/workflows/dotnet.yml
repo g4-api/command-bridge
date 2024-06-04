@@ -1,0 +1,48 @@
+# Workflow to build and release OcrInspector for production
+name: Build, Test & Release
+
+# Permissions for the workflow
+permissions:
+  contents: write
+
+# Trigger workflow on push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+# Set environment variables
+env:
+  artifactStagingDirectory: ${{ github.workspace }}/artifact_staging
+  artifactType: 'Production'
+  binariesDirectory: ${{ github.workspace }}/binaries
+  buildConfiguration: 'Release'
+  buildPlatform: 'any cpu'
+  projectName: CommandBridge
+
+# Default settings for all run steps
+defaults:
+  run:
+    working-directory: src
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
