@@ -27,8 +27,7 @@ defaults:
 
 jobs:
   build:
-
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -43,6 +42,28 @@ jobs:
       
     - name: Build
       run: dotnet build
+
+  test:
+    runs-on: windows-latest
+    needs: 
+      - build
+    if: success()
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
       
-    - name: Test
-      run: dotnet test
+    - name: test
+      run: dotnet test -l:trx;LogFileName=TestOutput.xml --verbosity normal
+      working-directory: src/UnitTestProject
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()      
+      with:
+        files: |
+          src/${{ projectName }}.UnitTests/TestResults/*.trx
