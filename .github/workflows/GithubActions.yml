@@ -4,6 +4,8 @@ name: Build, Test & Release
 # Permissions for the workflow
 permissions:
   contents: write
+  checks: write
+  pull-requests: write
 
 # Trigger workflow on push to the main branch
 on:
