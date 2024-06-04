@@ -66,4 +66,4 @@ jobs:
       if: always()      
       with:
         files: |
-          src/${{ projectName }}.UnitTests/TestResults/*.trx
+          src/${{ env.projectName }}.UnitTests/TestResults/*.trx
