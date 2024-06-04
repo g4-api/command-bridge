@@ -6,6 +6,7 @@ permissions:
   contents: write
   checks: write
   pull-requests: write
+  statuses: write
 
 # Trigger workflow on push to the main branch
 on:
