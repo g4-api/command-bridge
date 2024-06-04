@@ -58,7 +58,7 @@ jobs:
         dotnet-version: 8.0.x
       
     - name: test
-      run: dotnet test -l:trx;LogFileName=TestOutput.xml --verbosity normal
+      run: dotnet test -l:"trx;LogFileName=TestOutput.xml" --collect:"Xplat Code Coverage"
       working-directory: src/${{ env.projectName }}.UnitTests
 
     - name: Publish Test Results
