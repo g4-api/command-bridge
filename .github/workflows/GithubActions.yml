@@ -59,7 +59,7 @@ jobs:
       
     - name: test
       run: dotnet test -l:trx;LogFileName=TestOutput.xml --verbosity normal
-      working-directory: src/UnitTestProject
+      working-directory: src/${{ env.projectName }}.UnitTests
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
