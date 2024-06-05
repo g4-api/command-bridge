@@ -59,7 +59,7 @@ jobs:
         echo "valid=$($version -match '^\d+(\.\d+){3}$')" >> $env:GITHUB_OUTPUT
 
   # Job to build the project and run tests on Windows platform
-  build:
+  new-build:
     name: Build, Test & Package
     runs-on: windows-latest
     needs: 
@@ -150,7 +150,7 @@ jobs:
     name: Publish Unit Tests Results
     runs-on: ubuntu-latest
     needs: 
-      - build
+      - new-build
       - new-version
 
     steps:
@@ -178,7 +178,7 @@ jobs:
     name: Publish Coverage Results
     runs-on: ubuntu-latest
     needs: 
-      - build
+      - new-build
       - new-version
 
     # Environment variables for the job to build the project and run tests
@@ -364,15 +364,15 @@ jobs:
     if: success()
     environment: '.NET Libraries'
     needs: 
-      - build
+      - new-build
       - new-version
 
     steps:
     # Step to checkout the repository on Ubuntu platform
     - uses: actions/checkout@v4
     
-    # Step to download build artifacts for test results from Windows platform to Ubuntu platform
-    - name: Download Build Artifacts for Test Results
+    # Step to download build artifacts from Windows platform to Ubuntu platform
+    - name: Download Build Artifacts
       uses: actions/download-artifact@v4
       with:
         name: build-artifacts
@@ -382,3 +382,38 @@ jobs:
       shell: pwsh
       run: |
         dotnet nuget push "${{ env.artifactStagingDirectory }}/*.nupkg" --api-key ${{ secrets.NUGET_PUBLIC_KEY }} --source ${{ vars.NUGET_PUBLIC_SOURCE }}
+
+  # Job to create a GitHub release and tag the new version
+  new-release:
+    name: New GitHub Release Version ${{ needs.new-version.outputs.buildVersion }}
+    runs-on: windows-latest
+    if: success()
+    needs: 
+      - new-build
+      - new-version
+
+    # Set environment variables specific to the release job
+    env:
+      buildVersion: ${{ needs.new-version.outputs.buildVersion }}
+
+    steps:
+    # Step to checkout the repository on Ubuntu platform
+    - uses: actions/checkout@v4
+    
+    # Step to download build artifacts from Windows platform to Ubuntu platform
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: ${{ env.artifactStagingDirectory }}
+
+    # Step to create a GitHub release and tag
+    - name: Create GitHub Release & Tag v${{ env.buildVersion }}
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ env.artifactStagingDirectory }}/*.nupkg
+        tag_name: v${{ env.buildVersion }}
+        name: ${{ env.artifactType }} v${{ env.buildVersion }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
