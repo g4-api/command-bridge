@@ -1,32 +1,3 @@
-# name: Publish Job Summary
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v2
-
-#       - name: Run your job
-#         run: |
-#           # Your job commands here
-#           echo "Job step 1"
-#           echo "Job step 2"
-
-#       - name: Collect job summary
-#         run: |
-#           # Collect job summary information
-#           echo "## Job Summary" >> $GITHUB_STEP_SUMMARY
-#           echo "- Step 1 completed" >> $GITHUB_STEP_SUMMARY
-#           echo "- Step 2 completed" >> $GITHUB_STEP_SUMMARY
-
-
 # Workflow to build and release OcrInspector for production
 name: Build, Test & Release
 
@@ -70,7 +41,7 @@ jobs:
 
     steps:
     # Step to checkout the repository
-    - name: Checkout repository
+    - name: Checkout Repository
       uses: actions/checkout@v4
     
     # Step to parse the build version for GitHub tag
@@ -87,107 +58,146 @@ jobs:
         $version = "${{ steps.parse-version.outputs.version }}"
         echo "valid=$($version -match '^\d+(\.\d+){3}$')" >> $env:GITHUB_OUTPUT
 
+  # Job to build the project and run tests on Windows platform
   build:
+    name: Build, Test
     runs-on: windows-latest
+    needs: 
+      - new-version
+
+    # Environment variables for the job to build the project and run tests
+    env:
+      buildVersion: ${{ needs.new-version.outputs.buildVersion }}
 
     steps:
-    - uses: actions/checkout@v4
+    # Step to checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v4
     
+    # Step to setup .NET SDK version 8.0.x on Windows platform
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-        
-    - name: Restore dependencies
+
+    # Step to restore dependencies
+    - name: Restore Dependencies
       shell: pwsh 
       run: dotnet restore
-      
-    - name: Build
+
+    # Step to build the project
+    - name: Build ${{ env.projectName }} v${{ env.buildVersion }}
       shell: pwsh
       run: dotnet build
 
-    - name: test
+    # Step to run unit tests and collect code coverage on Windows platform using PowerShell Core (pwsh) shell
+    - name: Unit Tests and Code Coverage
       shell: pwsh
-      run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"Xplat Code Coverage"
+      run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.v${{ env.buildVersion }}.xml" --collect:"Xplat Code Coverage"
       working-directory: src/${{ env.projectName }}.UnitTests
 
-    # Step to upload the build artifact
-    - name: Upload a Build Artifact
+    # Step to upload build artifacts to GitHub for test results
+    - name: Upload Unit Tests Results
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: ${{ env.artifactStagingDirectory }}/TestOutput.xml
+        path: ${{ env.artifactStagingDirectory }}/TestOutput.v${{ env.buildVersion }}.xml
 
-    # Step to parse the build version for GitHub tag
-    - name: Coverage
+
+    # Step to copy the coverage file to the artifact staging directory with a different file name
+    - name: Copy Coverage File to Artifact Staging Directory
       working-directory: src/${{ env.projectName }}.UnitTests
-      id: find-coverage-file
       shell: pwsh
       run: |
-          $coverageFile = Get-ChildItem `
-              -Path './TestResults' `
-              -Recurse -Filter 'coverage.cobertura.xml' `
-              -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-          Copy-Item -Path $coverageFile -Destination ${{ env.artifactStagingDirectory }}
+        # Get the most recently modified 'coverage.cobertura.xml' file from the './TestResults' directory and its subdirectories
+        $coverageFile = Get-ChildItem `
+            -Path './TestResults' `
+            -Recurse -Filter 'coverage.cobertura.xml' `
+            -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
 
-    - name: Upload a Build Artifact
+        # Define the new file name and destination path
+        $newFileName = 'coverage.cobertura.v${{ env.buildVersion }}.xml'
+        $destinationPath = Join-Path -Path ${{ env.artifactStagingDirectory }} -ChildPath $newFileName
+
+        # Ensure the destination directory exists
+        if (-not (Test-Path -Path ${{ env.artifactStagingDirectory }})) {
+            New-Item -ItemType Directory -Path ${{ env.artifactStagingDirectory }}
+        }
+
+        # Copy the most recently modified 'coverage.cobertura.xml' file to the artifact staging directory with the new file name
+        Copy-Item -Path $coverageFile -Destination $destinationPath
+
+    # Step to upload build artifacts to GitHub for code coverage
+    - name: Upload Code Coverage Results
       uses: actions/upload-artifact@v4
       with:
         name: test-coverage
-        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.xml
+        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.xml
 
+  # Job to publish test results and code coverage
   publish-test-results:
+    name: Publish Unit Tests Results
     runs-on: ubuntu-latest
+    if: success()
     needs: 
       - build
-    if: success()
+      - new-version
 
     steps:
+    # Step to checkout the repository on Ubuntu platform
     - uses: actions/checkout@v4
     
-    # Step to download build artifacts
-    - name: Download Build Artifacts
+    # Step to download build artifacts for test results from Windows platform to Ubuntu platform
+    - name: Download Build Artifacts for Test Results
       uses: actions/download-artifact@v4
       with:
         name: test-results
         path: ${{ env.artifactStagingDirectory }}
 
-    # - name: Publish Test Results
-    #   uses: EnricoMi/publish-unit-test-result-action@v2
-    #   if: always()
-    #   with:
-    #     files: |
-    #       ${{ env.artifactStagingDirectory }}/TestOutput.xml
+    # Step to publish test results to GitHub Actions UI
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        check_name: Unit Tests Results
+        files: |
+          ${{ env.artifactStagingDirectory }}/TestOutput.v${{ needs.new-version.outputs.buildVersion }}.xml
 
+  # Job to publish code coverage summary to GitHub Actions UI and as a build artifact for download
   publish-test-coverage:
+    name: Publish Coverage Results
     runs-on: ubuntu-latest
+    if: success()
     needs: 
       - build
-      - publish-test-results
-    if: success()
+
+    # Environment variables for the job to build the project and run tests
+    env:
+      buildVersion: ${{ needs.new-version.outputs.buildVersion }}
 
     steps:
+    # Step to checkout the repository on Ubuntu platform
     - uses: actions/checkout@v4
   
-    # Step to download build artifacts
-    - name: Download Build Artifacts
+    # Step to download build artifacts for code coverage from Windows platform to Ubuntu platform
+    - name: Download Build Artifacts for Code Coverage Results
       uses: actions/download-artifact@v4
       with:
         name: test-coverage
         path: ${{ env.artifactStagingDirectory }}
-  
-    - name: Code Coverage Summary
+
+    # Step to generate code coverage summary in markdown format using PowerShell Core (pwsh)
+    # shell and upload as a build artifact for download and display in GitHub Actions UI as a job summary
+    - name: New Code Coverage Summary
       id: new-coverage-file
       shell: pwsh
       run: |
-        Write-Host "Current Location: $(Get-Location)"
-
-        $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
-        $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
-        $showBadges = $true               # Switch to show badges
-        $showPackages = $true             # Switch to show packages
-        $showClassSummary = $true         # Switch to show class summary
-        $showClassDetails = $true          # Switch to show class details
+        $xmlSource        = "${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.xml"
+        $outputFile       = "${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.md"
+        $showBadges       = $true
+        $showPackages     = $true
+        $showClassSummary = $true
+        $showClassDetails = $true
 
         # Determine if the source is a URL or a file path
         if ($xmlSource -match "^http(s)?://") {
@@ -211,8 +221,7 @@ jobs:
             $markdown += @"
 
 
-        ![Line Coverage](https://img.shields.io/badge/Line%20Coverage-$lineCoverage%25-success?style=flat)
-        ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-$branchCoverage%25-success?style=flat)
+        ![Line Coverage](https://img.shields.io/badge/Line%20Coverage-$lineCoverage%25-success?style=flat) ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-$branchCoverage%25-success?style=flat)
 
         "@
         }
@@ -318,16 +327,22 @@ jobs:
 
         # Write the markdown content to the output file
         $markdown | Out-File -FilePath $outputFile -Encoding utf8
-
-    - name: Upload a Build Artifact
+    
+    # Step to upload the code coverage summary file as a build artifact
+    # This makes the coverage summary available for download from the workflow run details in GitHub Actions UI
+    - name: Upload Code Coverage Summary
       uses: actions/upload-artifact@v4
       with:
-        name: test-coverage-summary
-        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.md
+        name: test-coverage-summary # The name to assign to the uploaded artifact
+        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.${{ env.buildVersion }}.md
 
-    - name: Collect job summary
-      shell: pwsh  
+    # Step to generate code coverage summary in markdown format using PowerShell Core (pwsh)
+    # and display it in the GitHub Actions UI as a job summary
+    - name: Collect Job Summary
+      shell: pwsh
       run: |
-        # Collect job summary information
+        # Read the content of the coverage report file
         $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"
+
+        # Append the content to the GitHub Actions job summary to display it in the workflow run details
         $content | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
