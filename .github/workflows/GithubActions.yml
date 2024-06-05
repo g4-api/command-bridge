@@ -144,7 +144,7 @@ jobs:
 
 
 
-        $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
+        $xmlSource = "coverage.cobertura.xml"               # Path or URL to the XML file
         $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
         $showBadges = $true               # Switch to show badges
         $showPackages = $true             # Switch to show packages
