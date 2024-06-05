@@ -134,9 +134,9 @@ jobs:
         path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.xml
 
     # Step to package the project for release as a NuGet package on Windows platform
-    - name: Packages v${{ env.projectName }}
+    - name: New Packages v${{ env.buildVersion }}
       shell: pwsh
-      run: dotnet pack --configuration Release --output ${{ env.artifactStagingDirectory }} --version ${{ env.buildVersion }}
+      run: dotnet pack -o ${{ env.artifactStagingDirectory }} -c Release /p:Version=${{ env.buildVersion }}
 
     # Step to upload the build artifact to GitHub for download
     - name: Upload Build Artifact ${{ env.projectName }}.${{ env.projectName }}.nupkg
