@@ -142,9 +142,6 @@ jobs:
       id: new-coverage-file
       shell: pwsh
       run: |
-
-
-
         Write-Host "Current Location: $(Get-Location)"
 
         $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
@@ -284,32 +281,14 @@ jobs:
         # Write the markdown content to the output file
         $markdown | Out-File -FilePath $outputFile -Encoding utf8
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4
       with:
-        recreate: true
-        path: code-coverage-results.md
+        name: test-coverage
+        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.md
+
+    - name: Add Markdown to summary
+      shell: pwsh
+      run: |
+        $markdown = Get-Content "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" -Raw
+        echo "$markdown" >> $GITHUB_STEP_SUMMARY
