@@ -358,3 +358,29 @@ jobs:
 
         # Append the content to the GitHub Actions job summary to display it in the workflow run details
         $content | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+  # Job to publish build artifacts to NuGet feed for production release
+  publish-build-artifacts:
+    name: Publish Build Artifacts
+    runs-on: ubuntu-latest
+    environment: '.NET Libraries'
+    if: success()
+    needs: 
+      - build
+      - new-version
+
+    steps:
+    # Step to checkout the repository on Ubuntu platform
+    - uses: actions/checkout@v4
+    
+    # Step to download build artifacts for test results from Windows platform to Ubuntu platform
+    - name: Download Build Artifacts for Test Results
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: ${{ env.artifactStagingDirectory }}
+
+    - name: ''
+      shell: pwsh
+      run: |
+        dotnet nuget push "${{ env.artifactStagingDirectory }}/*.nupkg" --api-key ${{ secrets.NUGET_PUBLIC_KEY }} --source ${{ env.NUGET_PUBLIC_SOURCE }}
