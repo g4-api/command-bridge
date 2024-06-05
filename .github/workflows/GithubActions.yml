@@ -149,7 +149,7 @@ jobs:
 
 
 
-        
+        Write-Host "Current Location: $(Get-Location)"
 
         $xmlSource = "./coverage.cobertura.xml"               # Path or URL to the XML file
         $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
