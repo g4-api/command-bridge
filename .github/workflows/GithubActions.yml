@@ -169,6 +169,7 @@ jobs:
     if: success()
     needs: 
       - build
+      - new-version
 
     # Environment variables for the job to build the project and run tests
     env:
