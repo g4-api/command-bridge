@@ -326,7 +326,8 @@ jobs:
         path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.md
 
     - name: Collect job summary
+      shell: pwsh  
       run: |
         # Collect job summary information
-        Get-Content -Path "path/to/your/coverage.cobertura.md" | ForEach-Object { echo "$_" }
+        Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" | ForEach-Object { echo "$_" }
         echo "Foo Bar" >> $GITHUB_STEP_SUMMARY
