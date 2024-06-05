@@ -136,15 +136,22 @@ jobs:
         name: test-coverage
 
     - name: Code Coverage Summary
+      id: list-files
+      shell: pwsh
+      run: |
+        Get-ChildItem | ForEach-Object { if ($_.PSIsContainer) { Write-Host "Folder: $($_.Name)" } else { Write-Host "File: $($_.Name)" } }
+
+
+    - name: Code Coverage Summary
       id: new-coverage-file
       shell: pwsh
       run: |
 
 
 
+        
 
-
-        $xmlSource = "coverage.cobertura.xml"               # Path or URL to the XML file
+        $xmlSource = "./coverage.cobertura.xml"               # Path or URL to the XML file
         $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
         $showBadges = $true               # Switch to show badges
         $showPackages = $true             # Switch to show packages
