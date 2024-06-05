@@ -361,6 +361,7 @@ jobs:
   publish-build-artifacts:
     name: Publish Build Artifacts
     runs-on: ubuntu-latest
+    if: success()
     environment: '.NET Libraries'
     needs: 
       - build
