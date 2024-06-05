@@ -342,7 +342,7 @@ jobs:
       shell: pwsh
       run: |
         # Read the content of the coverage report file
-        $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"
+        $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.${{ env.buildVersion }}.md"
 
         # Append the content to the GitHub Actions job summary to display it in the workflow run details
         $content | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
