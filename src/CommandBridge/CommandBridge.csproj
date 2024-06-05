@@ -28,4 +28,8 @@
 		<NoWarn>$(NoWarn);SYSLIB1045</NoWarn>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<None Include="../../images/icon.png" Pack="true" PackagePath="content\icon.png" />
+	</ItemGroup>
+
 </Project>
