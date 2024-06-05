@@ -1,300 +1,329 @@
-# Workflow to build and release OcrInspector for production
-name: Build, Test & Release
+name: Publish Job Summary
 
-# Permissions for the workflow
-permissions:
-  contents: write
-  checks: write
-  pull-requests: write
-  statuses: write
-
-# Trigger workflow on push to the main branch
 on:
   push:
     branches:
       - main
 
-# Set environment variables
-env:
-  artifactStagingDirectory: ${{ github.workspace }}/artifact_staging
-  artifactType: 'Production'
-  binariesDirectory: ${{ github.workspace }}/binaries
-  buildConfiguration: 'Release'
-  buildPlatform: 'any cpu'
-  projectName: CommandBridge
-
-# Default settings for all run steps
-defaults:
-  run:
-    working-directory: src
-
 jobs:
-  # Job to get the version of the build
-  new-version:
-    name: New Version
-    runs-on: windows-latest
-
-    # Outputs of the job
-    outputs:
-      buildVersion: ${{ steps.parse-version.outputs.version }}
-      validVersion: ${{ steps.validate-version.outputs.valid }}
-
-    steps:
-    # Step to checkout the repository
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    # Step to parse the build version for GitHub tag
-    - name: Parse Build Version for GitHub Tag
-      id: parse-version
-      shell: pwsh
-      run: echo "version=$(Get-Date -UFormat '%Y.%m.%d').${{ github.run_number }}" >> $env:GITHUB_OUTPUT
-
-    # Step to validate the parsed version
-    - name: Validate Version ${{ steps.parse-version.outputs.version }}
-      id: validate-version
-      shell: pwsh
-      run: |
-        $version = "${{ steps.parse-version.outputs.version }}"
-        echo "valid=$($version -match '^\d+(\.\d+){3}$')" >> $env:GITHUB_OUTPUT
-
   build:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-        
-    - name: Restore dependencies
-      shell: pwsh 
-      run: dotnet restore
-      
-    - name: Build
-      shell: pwsh
-      run: dotnet build
-
-    - name: test
-      shell: pwsh
-      run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"Xplat Code Coverage"
-      working-directory: src/${{ env.projectName }}.UnitTests
-
-    # Step to upload the build artifact
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: ${{ env.artifactStagingDirectory }}/TestOutput.xml
-
-    # Step to parse the build version for GitHub tag
-    - name: Coverage
-      working-directory: src/${{ env.projectName }}.UnitTests
-      id: find-coverage-file
-      shell: pwsh
-      run: |
-          $coverageFile = Get-ChildItem `
-              -Path './TestResults' `
-              -Recurse -Filter 'coverage.cobertura.xml' `
-              -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-          Copy-Item -Path $coverageFile -Destination ${{ env.artifactStagingDirectory }}
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-coverage
-        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.xml
-
-  test:
     runs-on: ubuntu-latest
-    needs: 
-      - build
-    if: success()
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run your job
+        run: |
+          # Your job commands here
+          echo "Job step 1"
+          echo "Job step 2"
+
+      - name: Collect job summary
+        run: |
+          # Collect job summary information
+          echo "## Job Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Step 1 completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Step 2 completed" >> $GITHUB_STEP_SUMMARY
+
+
+# # Workflow to build and release OcrInspector for production
+# name: Build, Test & Release
+
+# # Permissions for the workflow
+# permissions:
+#   contents: write
+#   checks: write
+#   pull-requests: write
+#   statuses: write
+
+# # Trigger workflow on push to the main branch
+# on:
+#   push:
+#     branches:
+#       - main
+
+# # Set environment variables
+# env:
+#   artifactStagingDirectory: ${{ github.workspace }}/artifact_staging
+#   artifactType: 'Production'
+#   binariesDirectory: ${{ github.workspace }}/binaries
+#   buildConfiguration: 'Release'
+#   buildPlatform: 'any cpu'
+#   projectName: CommandBridge
+
+# # Default settings for all run steps
+# defaults:
+#   run:
+#     working-directory: src
+
+# jobs:
+#   # Job to get the version of the build
+#   new-version:
+#     name: New Version
+#     runs-on: windows-latest
+
+#     # Outputs of the job
+#     outputs:
+#       buildVersion: ${{ steps.parse-version.outputs.version }}
+#       validVersion: ${{ steps.validate-version.outputs.valid }}
+
+#     steps:
+#     # Step to checkout the repository
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
     
-    # Step to download build artifacts
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-results
-        path: ${{ env.artifactStagingDirectory }}
+#     # Step to parse the build version for GitHub tag
+#     - name: Parse Build Version for GitHub Tag
+#       id: parse-version
+#       shell: pwsh
+#       run: echo "version=$(Get-Date -UFormat '%Y.%m.%d').${{ github.run_number }}" >> $env:GITHUB_OUTPUT
 
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          ${{ env.artifactStagingDirectory }}/TestOutput.xml
+#     # Step to validate the parsed version
+#     - name: Validate Version ${{ steps.parse-version.outputs.version }}
+#       id: validate-version
+#       shell: pwsh
+#       run: |
+#         $version = "${{ steps.parse-version.outputs.version }}"
+#         echo "valid=$($version -match '^\d+(\.\d+){3}$')" >> $env:GITHUB_OUTPUT
 
-    # Step to download build artifacts
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-coverage
-        path: ${{ env.artifactStagingDirectory }}
+#   build:
+#     runs-on: windows-latest
+
+#     steps:
+#     - uses: actions/checkout@v4
+    
+#     - name: Setup .NET
+#       uses: actions/setup-dotnet@v4
+#       with:
+#         dotnet-version: 8.0.x
+        
+#     - name: Restore dependencies
+#       shell: pwsh 
+#       run: dotnet restore
+      
+#     - name: Build
+#       shell: pwsh
+#       run: dotnet build
+
+#     - name: test
+#       shell: pwsh
+#       run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"Xplat Code Coverage"
+#       working-directory: src/${{ env.projectName }}.UnitTests
+
+#     # Step to upload the build artifact
+#     - name: Upload a Build Artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: test-results
+#         path: ${{ env.artifactStagingDirectory }}/TestOutput.xml
+
+#     # Step to parse the build version for GitHub tag
+#     - name: Coverage
+#       working-directory: src/${{ env.projectName }}.UnitTests
+#       id: find-coverage-file
+#       shell: pwsh
+#       run: |
+#           $coverageFile = Get-ChildItem `
+#               -Path './TestResults' `
+#               -Recurse -Filter 'coverage.cobertura.xml' `
+#               -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+#           Copy-Item -Path $coverageFile -Destination ${{ env.artifactStagingDirectory }}
+
+#     - name: Upload a Build Artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: test-coverage
+#         path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.xml
+
+#   test:
+#     runs-on: ubuntu-latest
+#     needs: 
+#       - build
+#     if: success()
+
+#     steps:
+#     - uses: actions/checkout@v4
+    
+#     # Step to download build artifacts
+#     - name: Download Build Artifacts
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: test-results
+#         path: ${{ env.artifactStagingDirectory }}
+
+#     - name: Publish Test Results
+#       uses: EnricoMi/publish-unit-test-result-action@v2
+#       if: always()
+#       with:
+#         files: |
+#           ${{ env.artifactStagingDirectory }}/TestOutput.xml
+
+#     # Step to download build artifacts
+#     - name: Download Build Artifacts
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: test-coverage
+#         path: ${{ env.artifactStagingDirectory }}
 
 
-    - name: Code Coverage Summary
-      id: new-coverage-file
-      shell: pwsh
-      run: |
-        Write-Host "Current Location: $(Get-Location)"
+#     - name: Code Coverage Summary
+#       id: new-coverage-file
+#       shell: pwsh
+#       run: |
+#         Write-Host "Current Location: $(Get-Location)"
 
-        $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
-        $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
-        $showBadges = $true               # Switch to show badges
-        $showPackages = $true             # Switch to show packages
-        $showClassSummary = $true         # Switch to show class summary
-        $showClassDetails = $true          # Switch to show class details
+#         $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
+#         $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
+#         $showBadges = $true               # Switch to show badges
+#         $showPackages = $true             # Switch to show packages
+#         $showClassSummary = $true         # Switch to show class summary
+#         $showClassDetails = $true          # Switch to show class details
 
-        # Determine if the source is a URL or a file path
-        if ($xmlSource -match "^http(s)?://") {
-            # Load XML from URL
-            $xml = [xml](Invoke-WebRequest -Uri $xmlSource).Content
-        } else {
-            # Load XML from file
-            [xml]$xml = Get-Content -Path $xmlSource
-        }
+#         # Determine if the source is a URL or a file path
+#         if ($xmlSource -match "^http(s)?://") {
+#             # Load XML from URL
+#             $xml = [xml](Invoke-WebRequest -Uri $xmlSource).Content
+#         } else {
+#             # Load XML from file
+#             [xml]$xml = Get-Content -Path $xmlSource
+#         }
 
-        # Extract coverage rates
-        $lineCoverage = [math]::Round($xml.coverage.'line-rate', 2) * 100
-        $branchCoverage = [math]::Round($xml.coverage.'branch-rate', 2) * 100
+#         # Extract coverage rates
+#         $lineCoverage = [math]::Round($xml.coverage.'line-rate', 2) * 100
+#         $branchCoverage = [math]::Round($xml.coverage.'branch-rate', 2) * 100
 
-        # Start building the markdown content
-        $markdown = @"
-        # Code Coverage Report
-        "@
+#         # Start building the markdown content
+#         $markdown = @"
+#         # Code Coverage Report
+#         "@
 
-        if ($showBadges) {
-            $markdown += @"
+#         if ($showBadges) {
+#             $markdown += @"
 
 
-        ![Line Coverage](https://img.shields.io/badge/Line%20Coverage-$lineCoverage%25-success?style=flat)
-        ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-$branchCoverage%25-success?style=flat)
+#         ![Line Coverage](https://img.shields.io/badge/Line%20Coverage-$lineCoverage%25-success?style=flat)
+#         ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-$branchCoverage%25-success?style=flat)
 
-        "@
-        }
+#         "@
+#         }
 
-        $markdown += @"
+#         $markdown += @"
 
-        ## Overview
+#         ## Overview
 
-        - **Lines Covered**: $($xml.coverage.'lines-covered')
-        - **Valid Lines**: $($xml.coverage.'lines-valid')
-        - **Branches Covered**: $($xml.coverage.'branches-covered')
-        - **Valid Branches**: $($xml.coverage.'branches-valid')
+#         - **Lines Covered**: $($xml.coverage.'lines-covered')
+#         - **Valid Lines**: $($xml.coverage.'lines-valid')
+#         - **Branches Covered**: $($xml.coverage.'branches-covered')
+#         - **Valid Branches**: $($xml.coverage.'branches-valid')
 
-        "@
+#         "@
 
-        if ($showPackages) {
-            $markdown += @"
+#         if ($showPackages) {
+#             $markdown += @"
 
-        ## Packages
+#         ## Packages
 
-        "@
+#         "@
 
-            foreach ($package in $xml.coverage.packages.package) {
-                $packageName = $package.name
-                $packageLineRate = [math]::Round($package.'line-rate', 2) * 100
-                $packageBranchRate = [math]::Round($package.'branch-rate', 2) * 100
-                $packageComplexity = $package.complexity
+#             foreach ($package in $xml.coverage.packages.package) {
+#                 $packageName = $package.name
+#                 $packageLineRate = [math]::Round($package.'line-rate', 2) * 100
+#                 $packageBranchRate = [math]::Round($package.'branch-rate', 2) * 100
+#                 $packageComplexity = $package.complexity
 
-                $markdown += @"
+#                 $markdown += @"
 
-        ### Package: $packageName
+#         ### Package: $packageName
 
-        - **Line Coverage Rate**: $packageLineRate%
-        - **Branch Coverage Rate**: $packageBranchRate%
-        - **Complexity**: $packageComplexity
+#         - **Line Coverage Rate**: $packageLineRate%
+#         - **Branch Coverage Rate**: $packageBranchRate%
+#         - **Complexity**: $packageComplexity
 
-        "@
+#         "@
 
-                if ($showClassSummary) {
-                    $markdown += @"
+#                 if ($showClassSummary) {
+#                     $markdown += @"
 
-        #### Classes Summary
+#         #### Classes Summary
 
-        | Class Name                            | Filename            | Line Coverage Rate | Branch Coverage Rate | Complexity |
-        |---------------------------------------|---------------------|--------------------|----------------------|------------|
+#         | Class Name                            | Filename            | Line Coverage Rate | Branch Coverage Rate | Complexity |
+#         |---------------------------------------|---------------------|--------------------|----------------------|------------|
 
-        "@
+#         "@
 
-                    foreach ($class in $package.classes.class) {
-                        $className = $class.name
-                        $classFilename = $class.filename
-                        $classLineRate = [math]::Round($class.'line-rate', 2) * 100
-                        $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
-                        $classComplexity = $class.complexity
+#                     foreach ($class in $package.classes.class) {
+#                         $className = $class.name
+#                         $classFilename = $class.filename
+#                         $classLineRate = [math]::Round($class.'line-rate', 2) * 100
+#                         $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
+#                         $classComplexity = $class.complexity
 
-                        $markdown += @"
-        | $className | $classFilename | $classLineRate% | $classBranchRate% | $classComplexity |
+#                         $markdown += @"
+#         | $className | $classFilename | $classLineRate% | $classBranchRate% | $classComplexity |
 
-        "@
-                    }
-                }
+#         "@
+#                     }
+#                 }
 
-                if ($showClassDetails) {
-                    $markdown += "`n#### Class Details`n"
+#                 if ($showClassDetails) {
+#                     $markdown += "`n#### Class Details`n"
 
-                    foreach ($class in $package.classes.class) {
-                        $className = $class.name
-                        $classFilename = $class.filename
-                        $classLineRate = [math]::Round($class.'line-rate', 2) * 100
-                        $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
-                        $classComplexity = $class.complexity
+#                     foreach ($class in $package.classes.class) {
+#                         $className = $class.name
+#                         $classFilename = $class.filename
+#                         $classLineRate = [math]::Round($class.'line-rate', 2) * 100
+#                         $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
+#                         $classComplexity = $class.complexity
 
-                        $markdown += @"
+#                         $markdown += @"
 
-        ##### $className
+#         ##### $className
 
-        - **Filename**: `$classFilename`
-        - **Line Coverage Rate**: $classLineRate%
-        - **Branch Coverage Rate**: $classBranchRate%
-        - **Complexity**: $classComplexity
+#         - **Filename**: `$classFilename`
+#         - **Line Coverage Rate**: $classLineRate%
+#         - **Branch Coverage Rate**: $classBranchRate%
+#         - **Complexity**: $classComplexity
 
-        ###### Lines
+#         ###### Lines
 
-        | Line Number | Hits | Branch |
-        |-------------|------|--------|
+#         | Line Number | Hits | Branch |
+#         |-------------|------|--------|
 
-        "@
+#         "@
 
-                        foreach ($line in $class.lines.line) {
-                            $lineNumber = $line.number
-                            $hits = $line.hits
-                            $branch = $line.branch
+#                         foreach ($line in $class.lines.line) {
+#                             $lineNumber = $line.number
+#                             $hits = $line.hits
+#                             $branch = $line.branch
 
-                            $markdown += @"
-        | $lineNumber | $hits | $branch |
+#                             $markdown += @"
+#         | $lineNumber | $hits | $branch |
 
-        "@
-                        }
-                    }
-                }
-            }
-        }
+#         "@
+#                         }
+#                     }
+#                 }
+#             }
+#         }
 
-        # Write the markdown content to the output file
-        $markdown | Out-File -FilePath $outputFile -Encoding utf8
+#         # Write the markdown content to the output file
+#         $markdown | Out-File -FilePath $outputFile -Encoding utf8
 
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-coverage-summary
-        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.md
+#     - name: Upload a Build Artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: test-coverage-summary
+#         path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.md
 
-    - name: Add Markdown to summary
-      shell: pwsh
-      run: |
-        $markdown = Get-Content "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" -Raw
-        echo "$markdown" >> $GITHUB_STEP_SUMMARY
+#     - name: Add Markdown to summary
+#       shell: pwsh
+#       run: |
+#         $markdown = Get-Content "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" -Raw
+#         echo "$markdown" >> $GITHUB_STEP_SUMMARY
 
-    - name: Upload job summary artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: job-summary
-        path: $GITHUB_STEP_SUMMARY
+#     - name: Upload job summary artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: job-summary
+#         path: $GITHUB_STEP_SUMMARY
