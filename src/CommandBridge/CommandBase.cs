@@ -47,6 +47,38 @@ namespace CommandBridge
         public IDictionary<string, IDictionary<string, CommandData>> Commands { get; }
 
         /// <summary>
+        /// Finds and returns a command instance based on the specified command name provided in the arguments.
+        /// </summary>
+        /// <param name="args">The arguments provided to the application, where the first argument is expected to be the command name.</param>
+        /// <returns>A command instance corresponding to the specified command name, or null if the command is not found.</returns>
+        public static CommandBase FindCommand(string[] args)
+        {
+            // Check if there are at least two arguments (command name and at least one parameter)
+            if (args.Length < 1)
+            {
+                return default;
+            }
+
+            // Constant for case-insensitive string comparison
+            const StringComparison Comparison = StringComparison.OrdinalIgnoreCase;
+
+            // Extract the command name from the arguments
+            var command = args[0];
+
+            // Find and return a command instance matching the specified command name
+            return NewCommands().Find(i => i.GetAttribute().Name.Equals(command, Comparison));
+        }
+
+        /// <summary>
+        /// Retrieves the command attribute associated with the current command instance.
+        /// </summary>
+        /// <returns>The command attribute associated with the current command instance.</returns>
+        public CommandAttribute GetAttribute()
+        {
+            return GetType().GetCustomAttribute<CommandAttribute>();
+        }
+
+        /// <summary>
         /// Invokes the command with the specified arguments.
         /// </summary>
         /// <param name="args">The arguments for the command. The first argument should be the command name, and subsequent arguments should be parameters for the command.</param>
@@ -350,10 +382,9 @@ namespace CommandBridge
         private static List<CommandBase> NewCommands()
         {
             // Get all types in the executing assembly that derive from CommandBase and have a CommandAttribute
-            var types = Assembly
-                .GetEntryAssembly()
-                .GetTypes()
-                .Where(i => !i.IsAbstract && typeof(CommandBase).IsAssignableFrom(i) && i.GetCustomAttribute<CommandAttribute>() != null);
+            var types = GetTypes()
+                .Where(i => !i.IsAbstract && typeof(CommandBase).IsAssignableFrom(i) && i.GetCustomAttribute<CommandAttribute>() != null)
+                .ToList();
 
             // Initialize the list to store the command instances
             var commands = new List<CommandBase>();
@@ -367,6 +398,35 @@ namespace CommandBridge
 
             // Return the list of command instances
             return commands;
+        }
+
+        // Gets all types in the current AppDomain from all loaded assemblies
+        // and returns them as a list of Type objects
+        public static List<Type> GetTypes()
+        {
+            // Get all loaded assemblies in the current AppDomain
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            // Initialize a list to store all types
+            var allTypes = new List<Type>();
+
+            // Iterate over each assembly and load its types
+            foreach (var assembly in assemblies)
+            {
+                try
+                {
+                    // Load types from the assembly and add them to the list
+                    var types = assembly.GetTypes();
+                    allTypes.AddRange(types);
+                }
+                catch
+                {
+                    // Skip the assembly if an exception occurs
+                }
+            }
+
+            // Return the list of all types
+            return allTypes;
         }
 
         /// <summary>

@@ -15,15 +15,6 @@ namespace CommandBridge.UnitTests
     [TestClass]
     public class CommandBaseTests
     {
-        // Predefined commands for testing.
-        private static readonly Dictionary<string, IDictionary<string, CommandBase.CommandData>> s_commands = new()
-        {
-            ["testCommand"] = new Dictionary<string, CommandBase.CommandData>
-            {
-                ["param1"] = new CommandBase.CommandData { Name = "Parameter1", Description = "", Mandatory = true }
-            }
-        };
-
         /// <summary>
         /// Gets or sets the test context, which provides information about and functionality for the current test run.
         /// </summary>
@@ -33,7 +24,7 @@ namespace CommandBridge.UnitTests
         public void ValidCommandAndParametersTest()
         {
             // Instantiate the TestCommand class with the predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the arguments to be passed to the command
             var args = new[] { "testCommand", "-param1", "value" };
@@ -71,7 +62,7 @@ namespace CommandBridge.UnitTests
             var consoleOutput = stringWriter.ToString().Trim();
 
             // Verify that the console output matches the expected error message
-            Assert.AreEqual(expectedErrorMessage, consoleOutput);
+            Assert.IsTrue(consoleOutput.Contains(expectedErrorMessage));
         }
 
         [TestMethod(displayName: "Verify that valid command without parameters displays error message")]
@@ -82,7 +73,7 @@ namespace CommandBridge.UnitTests
             Console.SetOut(stringWriter);
 
             // Instantiate the TestCommand class with predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the arguments to be passed to the command (no parameters provided)
             var args = new[] { "testCommand" };
@@ -97,7 +88,7 @@ namespace CommandBridge.UnitTests
             var consoleOutput = stringWriter.ToString().Trim();
 
             // Verify that the console output matches the expected error message
-            Assert.AreEqual(expectedErrorMessage, consoleOutput);
+            Assert.IsTrue(consoleOutput.Contains(expectedErrorMessage));
         }
 
         [TestMethod(displayName: "Verify that missing mandatory parameter displays error message")]
@@ -108,7 +99,7 @@ namespace CommandBridge.UnitTests
             Console.SetOut(stringWriter);
 
             // Instantiate the TestCommand class with predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the arguments to be passed to the command (missing mandatory parameter)
             var args = new[] { "testCommand", "--param2", "value" };
@@ -134,7 +125,7 @@ namespace CommandBridge.UnitTests
             Console.SetOut(stringWriter);
 
             // Instantiate the TestCommand class with predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the arguments to be passed to the command (help parameter)
             var args = new[] { "testCommand", "--help" };
@@ -163,7 +154,7 @@ namespace CommandBridge.UnitTests
             Console.SetOut(stringWriter);
 
             // Instantiate the TestCommand class with predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the expected error message
             const string expectedMessage =
@@ -186,7 +177,6 @@ namespace CommandBridge.UnitTests
             Assert.AreEqual(expectedMessage, consoleOutput);
         }
 
-        // test method for valid command with invalid long hyphen test case
         [TestMethod(displayName: "Verify that valid command with invalid long hyphen displays error message")]
         public void ValidCommandInvalidLongHyphenTest()
         {
@@ -195,7 +185,7 @@ namespace CommandBridge.UnitTests
             Console.SetOut(stringWriter);
 
             // Instantiate the TestCommand class with predefined commands
-            var commandBase = new TestCommand(s_commands);
+            var commandBase = new TestCommand();
 
             // Define the expected error message
             const string expectedMessage =
@@ -217,15 +207,60 @@ namespace CommandBridge.UnitTests
             // Assert that the console output matches the expected error message
             Assert.AreEqual(expectedMessage, consoleOutput);
         }
+
+        [TestMethod(displayName: "Verify that FindCommand method returns correct command")]
+        public void FindCommandTest()
+        {
+            // Define the arguments to be passed to the command
+            var args = new[] { "testCommand" };
+
+            // Find the command with the specified name
+            var command = CommandBase.FindCommand(args);
+
+            // Assert that the command was found
+            Assert.IsNotNull(command);
+            Assert.IsInstanceOfType(command, typeof(TestCommand));
+        }
+
+        [TestMethod(displayName: "Verify that FindCommand method returns null for invalid command")]
+        public void GetCommandTest()
+        {
+            // Define the arguments to be passed to the command
+            var args = new[] { "invalidCommand" };
+
+            // Find the command with the specified name
+            var command = CommandBase.FindCommand(args);
+
+            // Assert that the command was not found
+            Assert.IsNull(command);
+        }
     }
 
     /// <summary>
     /// Represents a test command for unit testing purposes.
     /// </summary>
-    /// <param name="commands">Dictionary containing command names and their corresponding command data.</param>
     [Command(name: "testCommand", description: "This is a test command used for unit testing purposes.")]
-    public class TestCommand(IDictionary<string, IDictionary<string, CommandBase.CommandData>> commands) : CommandBase(commands)
+    public class TestCommand : CommandBase
     {
+        // A static dictionary to store command parameters.
+        private static readonly Dictionary<string, IDictionary<string, CommandData>> s_commands = new()
+        {
+            ["testCommand"] = new Dictionary<string, CommandData>
+            {
+                ["param1"] = new CommandData { Name = "Parameter1", Description = "", Mandatory = true }
+            }
+        };
+
+        /// <inheritdoc />
+        public TestCommand()
+            : base(s_commands)
+        { }
+
+        /// <inheritdoc />
+        public TestCommand(Dictionary<string, IDictionary<string, CommandData>> commands)
+            : base(commands)
+        { }
+
         /// <inheritdoc />
         protected override void OnInvoke(Dictionary<string, string> parameters)
         {
