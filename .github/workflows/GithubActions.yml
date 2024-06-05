@@ -333,8 +333,8 @@ jobs:
     - name: Upload Code Coverage Summary
       uses: actions/upload-artifact@v4
       with:
-        name: test-coverage-summary # The name to assign to the uploaded artifact
-        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.${{ env.buildVersion }}.md
+        name: test-coverage-summary
+        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.md
 
     # Step to generate code coverage summary in markdown format using PowerShell Core (pwsh)
     # and display it in the GitHub Actions UI as a job summary
@@ -342,7 +342,7 @@ jobs:
       shell: pwsh
       run: |
         # Read the content of the coverage report file
-        $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.${{ env.buildVersion }}.md"
+        $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.md"
 
         # Append the content to the GitHub Actions job summary to display it in the workflow run details
         $content | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
