@@ -109,7 +109,7 @@ jobs:
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()      
+      if: always()
       with:
         files: |
           ./TestOutput.xml
@@ -125,3 +125,16 @@ jobs:
       with:
         filename: coverage.cobertura.xml
         badge: true
+
+    - name: Code Coverage Report
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: coverage.cobertura.xml
+        badge: true
+        fail_below_min: true
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: true
+        indicators: true
+        output: both
+        thresholds: '60 80'
