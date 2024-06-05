@@ -377,7 +377,7 @@ jobs:
         name: build-artifacts
         path: ${{ env.artifactStagingDirectory }}
 
-    - name: ''
+    - name: Publish Build Artifacts to NuGet Feed
       shell: pwsh
       run: |
         dotnet nuget push "${{ env.artifactStagingDirectory }}/*.nupkg" --api-key ${{ secrets.NUGET_PUBLIC_KEY }} --source ${{ vars.NUGET_PUBLIC_SOURCE }}
