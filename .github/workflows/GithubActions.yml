@@ -196,8 +196,8 @@ jobs:
         $outputFile       = "${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.md"
         $showBadges       = $true
         $showPackages     = $true
-        $showClassSummary = $true
-        $showClassDetails = $true
+        $showClassSummary = $false
+        $showClassDetails = $false
 
         # Determine if the source is a URL or a file path
         if ($xmlSource -match "^http(s)?://") {
