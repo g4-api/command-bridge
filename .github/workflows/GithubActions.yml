@@ -330,4 +330,4 @@ jobs:
       run: |
         # Collect job summary information
         Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" | ForEach-Object { echo "$_" }
-        echo "Foo Bar" >> $GITHUB_STEP_SUMMARY
+        'Foo Bar Bar' | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
