@@ -112,7 +112,14 @@ namespace CommandBridge
             }
 
             // Invoke the command with the formatted parameters
-            OnInvoke(parameters);
+            try
+            {
+                OnInvoke(parameters);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         /// <summary>
