@@ -32,7 +32,6 @@
 
 	<ItemGroup>
 		<None Include="../../images/icon.png" Pack="true" PackagePath="content\icon.png" />
-		
 		<None Include="../../README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
