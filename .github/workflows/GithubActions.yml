@@ -91,6 +91,7 @@ jobs:
 
     # Step to parse the build version for GitHub tag
     - name: Coverage
+      working-directory: src/${{ env.projectName }}.UnitTests
       id: find-coverage-file
       shell: pwsh
       run: |
