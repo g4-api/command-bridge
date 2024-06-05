@@ -95,17 +95,17 @@ jobs:
       id: find-coverage-file
       shell: pwsh
       run: |
-          Write-Host (Get-Location)
-          $coverageFile = Get-ChildItem -Path './TestResults' -Recurse -Filter 'coverage.cobertura.xml' -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-          Write-Output "coverageFile=$coverageFile" >> $env:GITHUB_OUTPUT
-          Write-Host $coverageFile
-          #echo "coverageFile=$(Get-ChildItem -Path './TestResults' -Recurse -Filter 'coverage.cobertura.xml' -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName)" >> $env:GITHUB_OUTPUT
+          $coverageFile = Get-ChildItem `
+              -Path './TestResults' `
+              -Recurse -Filter 'coverage.cobertura.xml' `
+              -File | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+          Copy-Item -Path $coverageFile -Destination ${{ env.artifactStagingDirectory }}
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: test-coverage
-        path: ${{ needs.build.outputs.coverageFile }}
+        path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.xml
 
   test:
     runs-on: ubuntu-latest
