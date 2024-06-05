@@ -149,7 +149,6 @@ jobs:
   publish-test-results:
     name: Publish Unit Tests Results
     runs-on: ubuntu-latest
-    if: success()
     needs: 
       - build
       - new-version
@@ -178,7 +177,6 @@ jobs:
   publish-test-coverage:
     name: Publish Coverage Results
     runs-on: ubuntu-latest
-    if: success()
     needs: 
       - build
       - new-version
@@ -364,7 +362,6 @@ jobs:
     name: Publish Build Artifacts
     runs-on: ubuntu-latest
     environment: '.NET Libraries'
-    if: success()
     needs: 
       - build
       - new-version
@@ -383,4 +380,4 @@ jobs:
     - name: ''
       shell: pwsh
       run: |
-        dotnet nuget push "${{ env.artifactStagingDirectory }}/*.nupkg" --api-key ${{ secrets.NUGET_PUBLIC_KEY }} --source ${{ env.NUGET_PUBLIC_SOURCE }}
+        dotnet nuget push "${{ env.artifactStagingDirectory }}/*.nupkg" --api-key ${{ secrets.NUGET_PUBLIC_KEY }} --source ${{ vars.NUGET_PUBLIC_SOURCE }}
