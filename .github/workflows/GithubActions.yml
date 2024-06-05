@@ -362,7 +362,6 @@ jobs:
     name: Publish Build Artifacts
     runs-on: ubuntu-latest
     if: success()
-    environment: '.NET Libraries'
     needs: 
       - new-build
       - new-version
@@ -411,7 +410,7 @@ jobs:
     - name: Create GitHub Release & Tag v${{ env.buildVersion }}
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ env.artifactStagingDirectory }}/*.nupkg
+        files: ${{ env.artifactStagingDirectory }}/*.*
         tag_name: v${{ env.buildVersion }}
         name: ${{ env.artifactType }} v${{ env.buildVersion }}
         generate_release_notes: true
