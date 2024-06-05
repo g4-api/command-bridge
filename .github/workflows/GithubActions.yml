@@ -103,7 +103,6 @@ jobs:
         name: test-results
         path: ${{ env.artifactStagingDirectory }}/TestOutput.v${{ env.buildVersion }}.xml
 
-
     # Step to copy the coverage file to the artifact staging directory with a different file name
     - name: Copy Coverage File to Artifact Staging Directory
       working-directory: src/${{ env.projectName }}.UnitTests
