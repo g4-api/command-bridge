@@ -79,6 +79,12 @@ jobs:
       run: dotnet test -l:"trx;LogFileName=${{ env.artifactStagingDirectory }}/TestOutput.xml" --collect:"XPlat Code Coverage;Format=json"
       working-directory: src/${{ env.projectName }}.UnitTests
 
+    # Step to parse the build version for GitHub tag
+    - name: Find File
+      id: parse-version
+      shell: pwsh
+      run: echo "coverageFile=$(Get-ChildItem -Path './TestResults' -Recurse -Filter 'coverage.json' -File | Select-Object -ExpandProperty FullName)" >> $env:GITHUB_OUTPUT
+
     # Step to upload the build artifact
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
@@ -90,7 +96,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-coverage
-        path: '**/TestResults/**/coverage.json'
+        path: ${{ outputs.coverageFile }}
         
   test:
     runs-on: ubuntu-latest
