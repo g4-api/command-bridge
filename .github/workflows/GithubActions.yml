@@ -135,24 +135,174 @@ jobs:
       with:
         name: test-coverage
 
-    - name: Code Coverage Summaryy
-      uses: edaniels/CodeCoverageSummary@v1.2.3
-      with:
-        filename: coverage.cobertura.xml
-        badge: true
+    - name: Code Coverage Summary
+      id: new-coverage-file
+      shell: pwsh
+      run: |
 
-    - name: Code Coverage Report
-      uses: irongut/CodeCoverageSummary@v1.3.0
-      with:
-        filename: coverage.cobertura.xml
-        badge: true
-        fail_below_min: true
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: true
-        indicators: true
-        output: both
-        thresholds: '60 80'
+
+
+
+
+        $xmlSource = "${{ env.artifactStagingDirectory }}/coverage.cobertura.xml"               # Path or URL to the XML file
+        $outputFile = "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"               # Output file path
+        $showBadges = $true               # Switch to show badges
+        $showPackages = $true             # Switch to show packages
+        $showClassSummary = $true         # Switch to show class summary
+        $showClassDetails = $true          # Switch to show class details
+
+        # Determine if the source is a URL or a file path
+        if ($xmlSource -match "^http(s)?://") {
+            # Load XML from URL
+            $xml = [xml](Invoke-WebRequest -Uri $xmlSource).Content
+        } else {
+            # Load XML from file
+            [xml]$xml = Get-Content -Path $xmlSource
+        }
+
+        # Extract coverage rates
+        $lineCoverage = [math]::Round($xml.coverage.'line-rate', 2) * 100
+        $branchCoverage = [math]::Round($xml.coverage.'branch-rate', 2) * 100
+
+        # Start building the markdown content
+        $markdown = @"
+        # Code Coverage Report
+        "@
+
+        if ($showBadges) {
+            $markdown += @"
+
+
+        ![Line Coverage](https://img.shields.io/badge/Line%20Coverage-$lineCoverage%25-success?style=flat)
+        ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-$branchCoverage%25-success?style=flat)
+
+        "@
+        }
+
+        $markdown += @"
+
+        ## Overview
+
+        - **Lines Covered**: $($xml.coverage.'lines-covered')
+        - **Valid Lines**: $($xml.coverage.'lines-valid')
+        - **Branches Covered**: $($xml.coverage.'branches-covered')
+        - **Valid Branches**: $($xml.coverage.'branches-valid')
+
+        "@
+
+        if ($showPackages) {
+            $markdown += @"
+
+        ## Packages
+
+        "@
+
+            foreach ($package in $xml.coverage.packages.package) {
+                $packageName = $package.name
+                $packageLineRate = [math]::Round($package.'line-rate', 2) * 100
+                $packageBranchRate = [math]::Round($package.'branch-rate', 2) * 100
+                $packageComplexity = $package.complexity
+
+                $markdown += @"
+
+        ### Package: $packageName
+
+        - **Line Coverage Rate**: $packageLineRate%
+        - **Branch Coverage Rate**: $packageBranchRate%
+        - **Complexity**: $packageComplexity
+
+        "@
+
+                if ($showClassSummary) {
+                    $markdown += @"
+
+        #### Classes Summary
+
+        | Class Name                            | Filename            | Line Coverage Rate | Branch Coverage Rate | Complexity |
+        |---------------------------------------|---------------------|--------------------|----------------------|------------|
+
+        "@
+
+                    foreach ($class in $package.classes.class) {
+                        $className = $class.name
+                        $classFilename = $class.filename
+                        $classLineRate = [math]::Round($class.'line-rate', 2) * 100
+                        $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
+                        $classComplexity = $class.complexity
+
+                        $markdown += @"
+        | $className | $classFilename | $classLineRate% | $classBranchRate% | $classComplexity |
+
+        "@
+                    }
+                }
+
+                if ($showClassDetails) {
+                    $markdown += "`n#### Class Details`n"
+
+                    foreach ($class in $package.classes.class) {
+                        $className = $class.name
+                        $classFilename = $class.filename
+                        $classLineRate = [math]::Round($class.'line-rate', 2) * 100
+                        $classBranchRate = [math]::Round($class.'branch-rate', 2) * 100
+                        $classComplexity = $class.complexity
+
+                        $markdown += @"
+
+        ##### $className
+
+        - **Filename**: `$classFilename`
+        - **Line Coverage Rate**: $classLineRate%
+        - **Branch Coverage Rate**: $classBranchRate%
+        - **Complexity**: $classComplexity
+
+        ###### Lines
+
+        | Line Number | Hits | Branch |
+        |-------------|------|--------|
+
+        "@
+
+                        foreach ($line in $class.lines.line) {
+                            $lineNumber = $line.number
+                            $hits = $line.hits
+                            $branch = $line.branch
+
+                            $markdown += @"
+        | $lineNumber | $hits | $branch |
+
+        "@
+                        }
+                    }
+                }
+            }
+        }
+
+        # Write the markdown content to the output file
+        $markdown | Out-File -FilePath $outputFile -Encoding utf8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     - name: Add Coverage PR Comment
       uses: marocchino/sticky-pull-request-comment@v2
