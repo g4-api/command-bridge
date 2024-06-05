@@ -133,6 +133,18 @@ jobs:
         name: test-coverage
         path: ${{ env.artifactStagingDirectory }}/coverage.cobertura.v${{ env.buildVersion }}.xml
 
+    # Step to package the project for release as a NuGet package on Windows platform
+    - name: Package ${{ env.projectName }} v${{ env.projectName }}
+      shell: pwsh
+      run: dotnet pack -p:PackageId=${{ env.projectName }}.${{ env.projectName }} -o ${{ env.artifactStagingDirectory }}
+
+    # Step to upload the build artifact to GitHub for download
+    - name: Upload Build Artifact ${{ env.projectName }}.${{ env.projectName }}.nupkg
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifact
+        path: ${{ env.artifactStagingDirectory }}/${{ env.projectName }}.${{ env.projectName }}.nupkg
+
   # Job to publish test results and code coverage
   publish-test-results:
     name: Publish Unit Tests Results
