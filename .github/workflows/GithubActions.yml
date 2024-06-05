@@ -327,7 +327,13 @@ jobs:
 
     - name: Add Markdown to summary
       shell: pwsh
+      id: aaa
       run: |
         $markdown = Get-Content "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" -Raw
-        Write-Host $markdown
-        echo "$markdown" >> $GITHUB_STEP_SUMMARY
+        echo "summary=$markdown" >> $env:GITHUB_OUTPUT
+
+    - name: Collect job summary
+      run: |
+        # Collect job summary information
+        echo ${{ steps.aaa.outputs.summary }}
+        echo ${{ steps.aaa.outputs.summary }} >> $GITHUB_STEP_SUMMARY
