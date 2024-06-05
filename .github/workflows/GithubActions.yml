@@ -385,7 +385,7 @@ jobs:
   # Job to create a GitHub release and tag the new version
   new-release:
     name: New GitHub Release Version ${{ needs.new-version.outputs.buildVersion }}
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     if: success()
     needs: 
       - new-build
@@ -414,7 +414,7 @@ jobs:
     - name: Create GitHub Release & Tag v${{ env.buildVersion }}
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ env.artifactStagingDirectory }}/*.*
+        files: ${{ env.artifactStagingDirectory }}/*.nupkg
         tag_name: v${{ env.buildVersion }}
         name: ${{ env.artifactType }} v${{ env.buildVersion }}
         generate_release_notes: true
