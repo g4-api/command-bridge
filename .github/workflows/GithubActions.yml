@@ -394,6 +394,7 @@ jobs:
     # Set environment variables specific to the release job
     env:
       buildVersion: ${{ needs.new-version.outputs.buildVersion }}
+      artifactStagingDirectory: ${{ github.workspace }}/artifact-staging
 
     steps:
     # Step to checkout the repository on Ubuntu platform
@@ -405,6 +406,9 @@ jobs:
       with:
         name: build-artifacts
         path: ${{ env.artifactStagingDirectory }}
+
+    - name: List Artifact Directory Contents
+      run: dir ${{ env.artifactStagingDirectory }}
 
     # Step to create a GitHub release and tag
     - name: Create GitHub Release & Tag v${{ env.buildVersion }}
