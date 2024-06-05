@@ -60,7 +60,7 @@ jobs:
 
   # Job to build the project and run tests on Windows platform
   build:
-    name: Build, Test
+    name: Build, Test & Package
     runs-on: windows-latest
     needs: 
       - new-version
