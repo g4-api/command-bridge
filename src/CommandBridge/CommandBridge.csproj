@@ -14,7 +14,7 @@
 		<Title>CommandBridge</Title>
 		<PackageProjectUrl>https://github.com/g4-api/command-bridge</PackageProjectUrl>
 		<PackageIcon>content\icon.png</PackageIcon>
-		<PackageReadmeFile>content\README.md</PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>G4 API Community</Authors>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageLicenseExpression>Apache-2.0+</PackageLicenseExpression>
@@ -32,7 +32,8 @@
 
 	<ItemGroup>
 		<None Include="../../images/icon.png" Pack="true" PackagePath="content\icon.png" />
-		<None Include="../../README.md" Pack="true" PackagePath="content\README.md" />
+		
+		<None Include="../../README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>
