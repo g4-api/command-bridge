@@ -329,5 +329,5 @@ jobs:
       shell: pwsh  
       run: |
         # Collect job summary information
-        Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md" | ForEach-Object { echo "$_" }
-        'Foo Bar Bar' | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+        $content = Get-Content -Path "${{ env.artifactStagingDirectory }}/coverage.cobertura.md"
+        $content | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
