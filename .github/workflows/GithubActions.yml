@@ -159,13 +159,6 @@ jobs:
         files: |
           ${{ env.artifactStagingDirectory }}/TestOutput.xml
 
-    # Step to download build artifacts
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-coverage
-        path: ${{ env.artifactStagingDirectory }}
-
   publish-test-coverage:
     runs-on: ubuntu-latest
     needs: 
@@ -175,6 +168,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+  
+    # Step to download build artifacts
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: test-coverage
+        path: ${{ env.artifactStagingDirectory }}
   
     - name: Code Coverage Summary
       id: new-coverage-file
