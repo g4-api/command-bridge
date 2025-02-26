@@ -13,7 +13,6 @@
 		<PackageId>CommandBridge</PackageId>
 		<Title>CommandBridge</Title>
 		<PackageProjectUrl>https://github.com/g4-api/command-bridge</PackageProjectUrl>
-		<PackageIcon>content\icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Authors>G4 API Community</Authors>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -30,9 +29,7 @@
 		<NoWarn>$(NoWarn);SYSLIB1045</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<None Include="../../images/icon.png" Pack="true" PackagePath="content\icon.png" />
-		<None Include="../../README.md" Pack="true" PackagePath="\" />
+	<ItemGroup>		<None Include="../../README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>
